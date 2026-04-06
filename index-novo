@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carlos Antunes – IT Senior Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #e8c96e;
+    --gold-dim: rgba(201,168,76,0.15);
+    --dark: #050a12;
+    --dark2: #080f1a;
+    --dark3: #0d1624;
+    --mid: #1a2840;
+    --text: #dce8f5;
+    --muted: #6a88a8;
+    --line: rgba(201,168,76,0.18);
+    --blue-glow: rgba(56,130,220,0.12);
+    --node: rgba(201,168,76,0.7);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  #world-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .page-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(5,10,18,0) 0%, rgba(5,10,18,0.6) 100%),
+      radial-gradient(ellipse 50% 80% at 0% 50%, rgba(5,10,18,0.5) 0%, transparent 100%);
+  }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 4rem;
+    background: rgba(5,10,18,0.75);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.76rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  #hero {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    overflow: hidden;
+  }
+  .hero-content { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; }
+
+  .hero-vline {
+    position: absolute;
+    left: -2rem; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent 0%, var(--gold) 40%, transparent 100%);
+    opacity: 0.5;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease forwards 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+
+  .hero-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.8rem, 8.5vw, 7.5rem);
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.2rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease forwards 0.5s;
+  }
+  .hero-name span { color: var(--gold); }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 2.4vw, 1.55rem);
+    font-weight: 300;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease forwards 0.7s;
+  }
+
+  .hero-summary {
+    max-width: 560px;
+    font-size: 0.96rem;
+    color: rgba(220,232,245,0.72);
+    line-height: 1.85;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease forwards 0.9s;
+    border-left: 1px solid var(--line);
+    padding-left: 1.5rem;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.9s ease forwards 1.1s;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.9rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+  }
+  .btn-primary { background: var(--gold); color: var(--dark); }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .btn-outline { background: transparent; color: var(--gold); border: 1px solid rgba(201,168,76,0.5); }
+  .btn-outline:hover { background: var(--gold-dim); transform: translateY(-2px); }
+
+  .hero-stats {
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2.8rem;
+    opacity: 0;
+    animation: fadeIn 1.2s ease forwards 1.4s;
+  }
+  .stat { text-align: right; padding-right: 1.5rem; border-right: 2px solid var(--gold); }
+  .stat-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+
+  .section-wrap {
+    position: relative;
+    z-index: 10;
+  }
+  section {
+    padding: 6rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+  .section-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.88rem;
+    color: var(--gold);
+    opacity: 0.55;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+  .section-line { flex: 1; height: 1px; background: var(--line); }
+
+  #expertise-wrap {
+    background: rgba(8,15,26,0.88);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  #expertise { max-width: 1200px; margin: 0 auto; padding: 6rem 4rem; }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px,1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .skill-card {
+    background: var(--dark2);
+    padding: 2.2rem;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .skill-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .skill-card:hover::after { transform: scaleX(1); }
+  .skill-card:hover { background: rgba(13,22,36,0.95); }
+  .skill-icon { font-size: 1.3rem; margin-bottom: 1rem; display: block; opacity: 0.8; }
+  .skill-cat { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+  .skill-title { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 400; margin-bottom: 1rem; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .tag { font-size: 0.7rem; padding: 0.22rem 0.65rem; border: 1px solid rgba(201,168,76,0.2); color: var(--muted); letter-spacing: 0.04em; }
+
+  #experience-wrap { background: transparent; }
+  #experience { max-width: 1200px; margin: 0 auto; padding: 6rem 4rem; }
+
+  .timeline { position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 170px; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold-dim), rgba(201,168,76,0.3), var(--gold-dim));
+  }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 0 3rem;
+    margin-bottom: 3.5rem;
+    position: relative;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 170px; top: 0.55rem;
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    transform: translateX(-3.5px);
+    box-shadow: 0 0 10px rgba(201,168,76,0.6);
+  }
+  .timeline-meta { text-align: right; padding-top: 0.2rem; }
+  .timeline-period { font-size: 0.76rem; letter-spacing: 0.1em; color: var(--gold); font-weight: 500; }
+  .timeline-location { font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; letter-spacing: 0.05em; }
+  .timeline-role { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 400; margin-bottom: 0.15rem; }
+  .timeline-company { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem; }
+  .timeline-desc { font-size: 0.88rem; color: rgba(220,232,245,0.65); line-height: 1.8; margin-bottom: 0.8rem; }
+  .timeline-highlights { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+  .timeline-highlights li { font-size: 0.82rem; color: rgba(220,232,245,0.6); padding-left: 1rem; position: relative; }
+  .timeline-highlights li::before { content: '—'; position: absolute; left: 0; color: var(--gold); opacity: 0.55; }
+
+  #achievements-wrap {
+    background: rgba(8,15,26,0.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  #achievements { max-width: 1200px; margin: 0 auto; padding: 6rem 4rem; }
+
+  .achieve-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 1.8rem;
+  }
+  .achieve-card {
+    border: 1px solid var(--line);
+    padding: 2rem;
+    transition: border-color 0.3s, background 0.3s;
+    background: rgba(13,22,36,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .achieve-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .achieve-card:hover { border-color: rgba(201,168,76,0.5); }
+  .achieve-card:hover::before { opacity: 1; }
+  .achieve-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem;
+    font-weight: 300;
+    color: var(--gold);
+    opacity: 0.2;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .achieve-text { font-size: 0.9rem; color: rgba(220,232,245,0.78); line-height: 1.75; }
+
+  #education-wrap { background: transparent; }
+  #education { max-width: 1200px; margin: 0 auto; padding: 6rem 4rem; }
+
+  .edu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; }
+  .edu-block h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .edu-item { margin-bottom: 1.4rem; }
+  .edu-year { font-size: 0.7rem; letter-spacing: 0.16em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.15rem; }
+  .edu-degree { font-size: 0.93rem; margin-bottom: 0.1rem; }
+  .edu-inst { font-size: 0.78rem; color: var(--muted); }
+
+  .lang-grid { display: flex; gap: 1.8rem; flex-wrap: wrap; margin-top: 1rem; }
+  .lang-item { display: flex; flex-direction: column; gap: 0.35rem; min-width: 110px; }
+  .lang-name { font-size: 0.83rem; font-weight: 500; }
+  .lang-level { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .lang-bar { height: 2px; background: rgba(106,136,168,0.25); position: relative; }
+  .lang-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold); }
+
+  #contact-wrap {
+    border-top: 1px solid var(--line);
+    background: rgba(5,10,18,0.92);
+    backdrop-filter: blur(16px);
+  }
+  #contact { max-width: 1200px; margin: 0 auto; padding: 6rem 4rem; display: flex; justify-content: space-between; align-items: center; gap: 3rem; flex-wrap: wrap; }
+
+  .contact-left h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.5rem; }
+  .contact-left p { color: var(--muted); font-size: 0.88rem; }
+  .contact-links { display: flex; flex-direction: column; gap: 1rem; }
+  .contact-link { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--text); font-size: 0.88rem; transition: color 0.3s; }
+  .contact-link:hover { color: var(--gold); }
+  .contact-link-icon {
+    width: 34px; height: 34px;
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; color: var(--gold); flex-shrink: 0;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .contact-link:hover .contact-link-icon { border-color: var(--gold); background: var(--gold-dim); }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    position: relative;
+    z-index: 10;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { gap: 1.2rem; }
+    .nav-links a { font-size: 0.68rem; }
+    section, #expertise, #achievements, #experience, #education, #contact { padding: 4rem 1.5rem; }
+    #hero { padding: 7rem 1.5rem 4rem; }
+    .hero-stats { display: none; }
+    .timeline::before { left: 0; }
+    .timeline-item { grid-template-columns: 1fr; gap: 0.5rem; }
+    .timeline-item::before { display: none; }
+    .timeline-meta { text-align: left; }
+    .edu-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="world-canvas"></canvas>
+<div class="page-overlay"></div>
+
+<nav>
+  <div class="nav-logo">Carlos Antunes</div>
+  <ul class="nav-links">
+    <li><a href="#expertise-wrap">Expertise</a></li>
+    <li><a href="#experience-wrap">Experience</a></li>
+    <li><a href="#achievements-wrap">Achievements</a></li>
+    <li><a href="#education-wrap">Education</a></li>
+    <li><a href="#contact-wrap">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="section-wrap">
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-vline"></div>
+    <div class="hero-eyebrow">IT Senior Manager · Enterprise Applications · PMO</div>
+    <h1 class="hero-name">Carlos<br><span>Antunes</span></h1>
+    <p class="hero-title">Enterprise Transformation · ERP Leadership · Digital Strategy</p>
+    <p class="hero-summary">
+      Senior IT leader with 20+ years driving enterprise transformation across Europe.
+      Expert in SAP, SuccessFactors and SAGE X3 — aligning technology with business strategy
+      across industrial, retail, and service sectors.
+    </p>
+    <div class="hero-cta">
+      <a href="#experience-wrap" class="btn btn-primary">View Experience</a>
+      <a href="Carlos_Antunes_CV.pdf" class="btn btn-outline" download>Download CV</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-number">20+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">5</div>
+      <div class="stat-label">Countries Delivered</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">320</div>
+      <div class="stat-label">Sites Standardised</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div id="expertise-wrap" class="section-wrap">
+<div id="expertise">
+  <div class="section-header reveal">
+    <span class="section-number">01</span>
+    <h2 class="section-title">Areas of Expertise</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-card reveal">
+      <span class="skill-icon">⬡</span>
+      <div class="skill-cat">Leadership</div>
+      <div class="skill-title">Management & Governance</div>
+      <div class="skill-tags">
+        <span class="tag">Multinational Teams</span><span class="tag">IT Strategy</span>
+        <span class="tag">PMO Governance</span><span class="tag">Vendor Management</span>
+        <span class="tag">Budget Control</span><span class="tag">Stakeholder Alignment</span>
+      </div>
+    </div>
+    <div class="skill-card reveal">
+      <span class="skill-icon">◈</span>
+      <div class="skill-cat">Enterprise Systems</div>
+      <div class="skill-title">ERP & Business Applications</div>
+      <div class="skill-tags">
+        <span class="tag">SAP ECC / S4HANA</span><span class="tag">SAP SuccessFactors</span>
+        <span class="tag">SAGE X3</span><span class="tag">MS Dynamics NAV</span>
+        <span class="tag">Oracle</span><span class="tag">Salesforce</span>
+      </div>
+    </div>
+    <div class="skill-card reveal">
+      <span class="skill-icon">◇</span>
+      <div class="skill-cat">Delivery</div>
+      <div class="skill-title">Project & Programme Management</div>
+      <div class="skill-tags">
+        <span class="tag">Agile / Scrum</span><span class="tag">Kanban</span>
+        <span class="tag">PMP® Practices</span><span class="tag">ERP Rollouts</span>
+        <span class="tag">Change Management</span><span class="tag">Waterfall</span>
+      </div>
+    </div>
+    <div class="skill-card reveal">
+      <span class="skill-icon">△</span>
+      <div class="skill-cat">Technology</div>
+      <div class="skill-title">Platforms & Tools</div>
+      <div class="skill-tags">
+        <span class="tag">Azure</span><span class="tag">SQL</span>
+        <span class="tag">Jira</span><span class="tag">Confluence</span>
+        <span class="tag">Azure DevOps</span><span class="tag">BTP</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="experience-wrap" class="section-wrap">
+<section id="experience">
+  <div class="section-header reveal">
+    <span class="section-number">02</span>
+    <h2 class="section-title">Career Journey</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2024 – Present</div>
+        <div class="timeline-location">Portugal · Switzerland · USA</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">IT Business Application Manager</div>
+        <div class="timeline-company">Conextivity Group</div>
+        <p class="timeline-desc">Leading enterprise-wide application strategy and delivery across a multinational industrial group. Driving system harmonisation and executive-level alignment.</p>
+        <ul class="timeline-highlights">
+          <li>Led SAP SuccessFactors rollout (EC, Payroll, Time) with full SAP ECC / BTP integration</li>
+          <li>Drove SAP ERP harmonisation across European sites</li>
+          <li>Contributing to SAP S/4HANA migration assessment and business case</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2022 – 2023</div>
+        <div class="timeline-location">Portugal · Ireland</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">Software Product Director</div>
+        <div class="timeline-company">MetaCompliance</div>
+        <p class="timeline-desc">Oversaw end-to-end product strategy for cybersecurity and compliance software, leading Agile engineering teams across two countries.</p>
+        <ul class="timeline-highlights">
+          <li>Defined product roadmap for core cybersecurity solutions</li>
+          <li>Delivered major releases via strategic vendor partnerships</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2019 – 2022</div>
+        <div class="timeline-location">Portugal · Czech Republic</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">PMO & Senior Project Manager</div>
+        <div class="timeline-company">Paul Stricker Group</div>
+        <p class="timeline-desc">Led full-cycle SAGE X3 ERP implementation across all group subsidiaries — warehouse, production, procurement, finance and treasury.</p>
+        <ul class="timeline-highlights">
+          <li>ERP rollout across 3 countries integrating all core business functions</li>
+          <li>Introduced Salesforce & Sage CRM hybrid for multi-channel sales</li>
+          <li>Oversaw SaaS transition and data centre restructuring</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2016 – 2018</div>
+        <div class="timeline-location">Portugal</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">IT Manager & PMO</div>
+        <div class="timeline-company">JP.Group · JP.Holding Services SA</div>
+        <p class="timeline-desc">Led SAGE X3 ERP implementation across all subsidiaries, driving infrastructure modernisation and digital roadmap definition.</p>
+      </div>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2008 – 2011</div>
+        <div class="timeline-location">Portugal</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">IT Manager & PMO</div>
+        <div class="timeline-company">Sonae Capital · Sonae Group</div>
+        <p class="timeline-desc">Defined and executed IT strategy for one of Portugal's largest holdings. Managed full IT portfolio including SAP ERP, Document Management and ITIL Service Desk.</p>
+      </div>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-meta">
+        <div class="timeline-period">2000 – 2008</div>
+        <div class="timeline-location">Portugal · Spain · Brazil</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-role">IT Business Analyst & Operational Manager</div>
+        <div class="timeline-company">Sonae MC · Sonae Group</div>
+        <p class="timeline-desc">Managed IT operations across three countries, standardising Front Office systems across 320 retail stores during one of Europe's largest retail expansions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div id="achievements-wrap" class="section-wrap">
+<div id="achievements">
+  <div class="section-header reveal">
+    <span class="section-number">03</span>
+    <h2 class="section-title">Key Achievements</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="achieve-grid">
+    <div class="achieve-card reveal">
+      <div class="achieve-num">01</div>
+      <p class="achieve-text">ERP deployments across five countries — process standardisation and full system integration at group level.</p>
+    </div>
+    <div class="achieve-card reveal">
+      <div class="achieve-num">02</div>
+      <p class="achieve-text">Led end-to-end SAP SuccessFactors rollout — Employee Central, Payroll, Time Management — fully integrated into SAP ECC and BTP.</p>
+    </div>
+    <div class="achieve-card reveal">
+      <div class="achieve-num">03</div>
+      <p class="achieve-text">Managed enterprise applications across multi-site operations in Portugal, Switzerland and the USA simultaneously.</p>
+    </div>
+    <div class="achieve-card reveal">
+      <div class="achieve-num">04</div>
+      <p class="achieve-text">Reduced IT operational costs through strategic vendor consolidation, contract renegotiation and process improvements.</p>
+    </div>
+    <div class="achieve-card reveal">
+      <div class="achieve-num">05</div>
+      <p class="achieve-text">Implemented PMO and IT governance frameworks improving delivery predictability, compliance and executive visibility.</p>
+    </div>
+    <div class="achieve-card reveal">
+      <div class="achieve-num">06</div>
+      <p class="achieve-text">Standardised Front Office systems across 320 retail stores across Portugal, Spain and Brazil.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="education-wrap" class="section-wrap">
+<section id="education">
+  <div class="section-header reveal">
+    <span class="section-number">04</span>
+    <h2 class="section-title">Education & Credentials</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="edu-grid">
+    <div class="edu-block reveal">
+      <h3>Academic Background</h3>
+      <div class="edu-item">
+        <div class="edu-year">2017</div>
+        <div class="edu-degree">MSc in Informatics</div>
+        <div class="edu-inst">Universidade do Porto</div>
+      </div>
+      <div class="edu-item">
+        <div class="edu-year">1999</div>
+        <div class="edu-degree">MBA – Master in Business Management</div>
+        <div class="edu-inst">Business Administration</div>
+      </div>
+      <div class="edu-item">
+        <div class="edu-year">1992</div>
+        <div class="edu-degree">Master in Computer Science</div>
+        <div class="edu-inst">Computer Science & Engineering</div>
+      </div>
+    </div>
+    <div class="edu-block reveal">
+      <h3>Certifications</h3>
+      <div class="edu-item"><div class="edu-degree">PMP® – Project Management Professional</div></div>
+      <div class="edu-item"><div class="edu-degree">Scrum Master Certified (CSM)</div></div>
+      <div class="edu-item"><div class="edu-degree">ISO/IEC 27001 – Information Security</div></div>
+      <div class="edu-item"><div class="edu-degree">Microsoft Certified Professional</div></div>
+      <div class="edu-item"><div class="edu-degree">Cybersecurity & BPM Certified</div></div>
+      <h3 style="margin-top:2.5rem;">Languages</h3>
+      <div class="lang-grid">
+        <div class="lang-item">
+          <span class="lang-name">Portuguese</span><span class="lang-level">Native</span>
+          <div class="lang-bar"><div class="lang-fill" style="width:100%"></div></div>
+        </div>
+        <div class="lang-item">
+          <span class="lang-name">English</span><span class="lang-level">Full Professional</span>
+          <div class="lang-bar"><div class="lang-fill" style="width:90%"></div></div>
+        </div>
+        <div class="lang-item">
+          <span class="lang-name">French</span><span class="lang-level">Intermediate</span>
+          <div class="lang-bar"><div class="lang-fill" style="width:55%"></div></div>
+        </div>
+        <div class="lang-item">
+          <span class="lang-name">Spanish</span><span class="lang-level">Elementary</span>
+          <div class="lang-bar"><div class="lang-fill" style="width:30%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div id="contact-wrap" class="section-wrap">
+<div id="contact">
+  <div class="contact-left reveal">
+    <h2>Let's Connect</h2>
+    <p>Open to strategic IT leadership opportunities across Europe.</p>
+  </div>
+  <div class="contact-links reveal">
+    <a href="Carlos_Antunes_CV.pdf" class="contact-link" download>
+      <div class="contact-link-icon">↓</div>Download CV (PDF)
+    </a>
+    <a href="mailto:jcantunespt@outlook.com" class="contact-link">
+      <div class="contact-link-icon">✉</div>jcantunespt@outlook.com
+    </a>
+    <a href="https://www.linkedin.com/in/jcantunes" target="_blank" rel="noopener noreferrer" class="contact-link">
+      <div class="contact-link-icon">in</div>linkedin.com/in/jcantunes
+    </a>
+    <a href="https://github.com/jcantunes" target="_blank" rel="noopener noreferrer" class="contact-link">
+      <div class="contact-link-icon">&#60;/&#62;</div>github.com/jcantunes
+    </a>
+  </div>
+</div>
+</div>
+
+<footer>© 2026 Carlos Antunes · IT Senior Manager · Enterprise Applications · PMO</footer>
+
+<script>
+const canvas = document.getElementById('world-canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+const CONTINENTS = [
+  [[0.465,0.18],[0.48,0.16],[0.5,0.15],[0.52,0.16],[0.54,0.17],[0.56,0.16],[0.57,0.18],[0.56,0.2],[0.55,0.22],[0.54,0.24],[0.52,0.25],[0.50,0.26],[0.48,0.25],[0.47,0.23],[0.465,0.21]],
+  [[0.455,0.22],[0.47,0.21],[0.48,0.23],[0.475,0.25],[0.46,0.26],[0.45,0.25],[0.448,0.23]],
+  [[0.462,0.155],[0.468,0.145],[0.475,0.148],[0.472,0.162],[0.463,0.165]],
+  [[0.495,0.11],[0.505,0.09],[0.52,0.10],[0.525,0.13],[0.515,0.15],[0.505,0.14],[0.497,0.13]],
+  [[0.46,0.28],[0.50,0.27],[0.54,0.28],[0.57,0.32],[0.58,0.38],[0.56,0.46],[0.54,0.52],[0.51,0.56],[0.48,0.55],[0.45,0.50],[0.43,0.44],[0.43,0.37],[0.44,0.31]],
+  [[0.12,0.12],[0.20,0.10],[0.26,0.12],[0.30,0.15],[0.32,0.20],[0.30,0.25],[0.27,0.28],[0.24,0.32],[0.20,0.35],[0.16,0.33],[0.13,0.28],[0.10,0.22],[0.10,0.16]],
+  [[0.28,0.06],[0.34,0.05],[0.37,0.08],[0.35,0.12],[0.30,0.13],[0.27,0.10]],
+  [[0.22,0.38],[0.27,0.35],[0.32,0.37],[0.34,0.43],[0.33,0.52],[0.30,0.60],[0.26,0.65],[0.23,0.64],[0.20,0.58],[0.19,0.50],[0.20,0.43]],
+  [[0.55,0.15],[0.62,0.12],[0.70,0.13],[0.78,0.15],[0.84,0.18],[0.88,0.22],[0.86,0.27],[0.82,0.30],[0.78,0.32],[0.74,0.30],[0.70,0.28],[0.66,0.26],[0.62,0.25],[0.59,0.24],[0.57,0.22],[0.56,0.19]],
+  [[0.64,0.28],[0.68,0.27],[0.70,0.30],[0.69,0.35],[0.67,0.38],[0.65,0.37],[0.63,0.33],[0.63,0.30]],
+  [[0.75,0.32],[0.80,0.31],[0.83,0.34],[0.82,0.38],[0.79,0.39],[0.76,0.37],[0.74,0.35]],
+  [[0.78,0.52],[0.84,0.50],[0.88,0.52],[0.89,0.58],[0.87,0.63],[0.83,0.65],[0.78,0.63],[0.76,0.58],[0.76,0.54]],
+  [[0.84,0.22],[0.86,0.20],[0.88,0.22],[0.87,0.25],[0.85,0.25]],
+  [[0.56,0.25],[0.60,0.24],[0.63,0.26],[0.63,0.30],[0.60,0.32],[0.57,0.30],[0.56,0.27]],
+];
+
+const CITIES = [
+  { x: 0.47, y: 0.235, label: 'Porto', highlight: true },
+  { x: 0.505, y: 0.21, label: 'Zurich', highlight: true },
+  { x: 0.465, y: 0.195, label: 'Dublin', highlight: false },
+  { x: 0.50, y: 0.225, label: 'Prague', highlight: false },
+  { x: 0.27, y: 0.38, label: 'New York', highlight: true },
+  { x: 0.485, y: 0.21, label: 'London', highlight: false },
+  { x: 0.505, y: 0.22, label: 'Frankfurt', highlight: false },
+  { x: 0.33, y: 0.52, label: 'São Paulo', highlight: false },
+  { x: 0.22, y: 0.38, label: 'Bogotá', highlight: false },
+];
+
+const CONNECTIONS = [
+  [0, 1], [0, 2], [0, 3], [0, 4], [1, 4],
+];
+
+const PARTICLES = Array.from({length: 80}, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  size: Math.random() * 1.2 + 0.3,
+  speed: Math.random() * 0.00015 + 0.00005,
+  opacity: Math.random() * 0.4 + 0.1,
+  angle: Math.random() * Math.PI * 2,
+}));
+
+const PULSES = CONNECTIONS.map(c => ({ conn: c, t: Math.random() }));
+
+let frame = 0;
+
+function toScreen(nx, ny) {
+  return [nx * canvas.width, ny * canvas.height];
+}
+
+function drawContinent(points, alpha) {
+  if (points.length < 3) return;
+  ctx.beginPath();
+  const [sx, sy] = toScreen(points[0][0], points[0][1]);
+  ctx.moveTo(sx, sy);
+  for (let i = 1; i < points.length; i++) {
+    const [px, py] = toScreen(points[i][0], points[i][1]);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = `rgba(20, 40, 70, ${alpha})`;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(56, 130, 220, ${alpha * 0.6})`;
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+}
+
+function drawGrid() {
+  for (let lat = 0.1; lat < 0.9; lat += 0.1) {
+    ctx.beginPath();
+    ctx.moveTo(0, lat * canvas.height);
+    ctx.lineTo(canvas.width, lat * canvas.height);
+    ctx.strokeStyle = 'rgba(56,130,220,0.04)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  for (let lon = 0.05; lon < 1; lon += 0.08) {
+    ctx.beginPath();
+    ctx.moveTo(lon * canvas.width, 0);
+    ctx.lineTo(lon * canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(56,130,220,0.04)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawConnections() {
+  CONNECTIONS.forEach(([a, b]) => {
+    const [x1, y1] = toScreen(CITIES[a].x, CITIES[a].y);
+    const [x2, y2] = toScreen(CITIES[b].x, CITIES[b].y);
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.15;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(mx, my, x2, y2);
+    ctx.strokeStyle = 'rgba(201,168,76,0.18)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+}
+
+function drawPulses() {
+  PULSES.forEach(p => {
+    p.t = (p.t + 0.004) % 1;
+    const [a, b] = p.conn;
+    const [x1, y1] = toScreen(CITIES[a].x, CITIES[a].y);
+    const [x2, y2] = toScreen(CITIES[b].x, CITIES[b].y);
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.15;
+    const u = p.t;
+    const px = (1-u)*(1-u)*x1 + 2*(1-u)*u*mx + u*u*x2;
+    const py = (1-u)*(1-u)*y1 + 2*(1-u)*u*my + u*u*y2;
+    const alpha = Math.sin(u * Math.PI) * 0.9;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201,168,76,${alpha})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201,168,76,${alpha * 0.3})`;
+    ctx.fill();
+  });
+}
+
+function drawCities() {
+  CITIES.forEach(city => {
+    const [cx, cy] = toScreen(city.x, city.y);
+    const pulse = city.highlight ? (Math.sin(frame * 0.04) * 0.5 + 0.5) : 0;
+
+    if (city.highlight) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 8 + pulse * 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(201,168,76,${0.15 + pulse * 0.1})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(201,168,76,0.7)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, city.highlight ? 3 : 2, 0, Math.PI * 2);
+    ctx.fillStyle = city.highlight ? 'rgba(201,168,76,0.95)' : 'rgba(56,130,220,0.5)';
+    ctx.fill();
+  });
+}
+
+function drawParticles() {
+  PARTICLES.forEach(p => {
+    p.x += Math.cos(p.angle) * p.speed;
+    p.y += Math.sin(p.angle) * p.speed;
+    p.angle += (Math.random() - 0.5) * 0.02;
+    if (p.x < 0) p.x = 1;
+    if (p.x > 1) p.x = 0;
+    if (p.y < 0) p.y = 1;
+    if (p.y > 1) p.y = 0;
+    const [px, py] = toScreen(p.x, p.y);
+    ctx.beginPath();
+    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(56,130,220,${p.opacity * 0.6})`;
+    ctx.fill();
+  });
+}
+
+function drawBinaryRain() {
+  if (frame % 12 === 0) {
+    const x = Math.random() * canvas.width;
+    const y = canvas.height * (0.1 + Math.random() * 0.8);
+    ctx.font = '9px monospace';
+    ctx.fillStyle = 'rgba(56,130,220,0.08)';
+    ctx.fillText(Math.random() > 0.5 ? '1' : '0', x, y);
+  }
+}
+
+function animate() {
+  frame++;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#050a12';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const vg = ctx.createRadialGradient(
+    canvas.width * 0.5, canvas.height * 0.4, 0,
+    canvas.width * 0.5, canvas.height * 0.4, canvas.width * 0.7
+  );
+  vg.addColorStop(0, 'rgba(8,20,45,0.3)');
+  vg.addColorStop(1, 'rgba(2,5,10,0.7)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawGrid();
+  CONTINENTS.forEach(c => drawContinent(c, 0.55));
+  drawParticles();
+  drawConnections();
+  drawPulses();
+  drawCities();
+  drawBinaryRain();
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+
+reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
